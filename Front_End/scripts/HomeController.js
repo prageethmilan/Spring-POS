@@ -50,11 +50,11 @@ function setItemCodesToComboBox() {
     $("#cmbitemcode").append(new Option("-Select Item-",""));
 
     $.ajax({
-        url:"http://localhost:8080/spa/item?option=GETALL",
+        url:"http://localhost:8080/springPOS/api/v1/item",
         method:"GET",
         success:function (res) {
             var i = 0;
-            for (const item of res) {
+            for (const item of res.data) {
                 $("#cmbitemcode").append(new Option(item.code,i));
                 i++;
             }

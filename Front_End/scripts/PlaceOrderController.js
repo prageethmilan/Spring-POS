@@ -10,9 +10,12 @@ $("#btnAddToCart").prop('disabled', true);
 $("#btnPlaceOrder").prop('disabled', true);
 let regBuyItemQty = /^[0-9]{1,}$/;
 
-generateOId();
-loadOrderTable();
-loadOrderDetailTable();
+$(function () {
+    generateOId();
+    /*loadOrderTable();
+    loadOrderDetailTable();*/
+})
+
 
 // Generate Order Id
 function generateOId() {
@@ -111,10 +114,10 @@ $("#btnAddToCart").click(function () {
     var qtyOnHand = parseInt($("#txtqtyOnHand").val());
     var buyQty = parseInt($("#txtbuyQty").val());
     if (buyQty <= qtyOnHand) {
-        addItemsToCart();
+        /*addItemsToCart();
         loadCartItemsToTable();
         clearSelectItemFields();
-        calculateTotalAndNoOfItems();
+        calculateTotalAndNoOfItems();*/
         $("#cartTable>tr").on('dblclick', function () {
             var itemCode = $(this).children(":eq(0)").text();
             for (var i = 0; i < cartTMDB.length; i++) {
@@ -122,9 +125,9 @@ $("#btnAddToCart").click(function () {
                     cartTMDB.splice(i, 1);
                 }
             }
-            loadCartItemsToTable();
+            /*loadCartItemsToTable();
             calculateTotalAndNoOfItems();
-            clearSelectItemFields();
+            clearSelectItemFields();*/
         });
 
     } else {
@@ -219,13 +222,13 @@ $("#txtCash").keyup(function (event) {
 
 // Clear Selected item details fields
 $("#btnClearItemFields").click(function () {
-    clearSelectItemFields();
+    /*clearSelectItemFields();*/
 });
 
 // Cancel Order
 $("#btnCancelOrder").click(function () {
-    clearPlaceOrderForm();
-    loadCartItemsToTable();
+    /*clearPlaceOrderForm();
+    loadCartItemsToTable();*/
 });
 
 // Clear Place order form
@@ -281,11 +284,11 @@ $("#btnPlaceOrder").click(function () {
         data: JSON.stringify(order),
         success: function (res) {
             if (res.boolean==true){
-                clearPlaceOrderForm();
+                /*clearPlaceOrderForm();
                 loadCartItemsToTable();
                 loadOrderTable();
                 loadOrderDetailTable();
-                generateOId();
+                generateOId();*/
 
                 swal({
                     title: "Success!",
@@ -344,8 +347,8 @@ function searchOrderByOrderTable(orderId) {
                 let tableRow = `<tr><td>${res.orderId}</td><td>${res.orderDate}</td><td>${res.customerId}</td><td>${res.total}</td></tr>`;
                 $("#orderTable").append(tableRow);
             } else {
-                loadOrderTable();
-                loadOrderDetailTable();
+                /*loadOrderTable();
+                loadOrderDetailTable();*/
                 swal({
                     title: "Error!",
                     text: "Order Not Found",
@@ -382,8 +385,8 @@ $("#searchOrder").on('shown.bs.modal', function () {
 // btn search order function
 $("#btnSearchOrder").click(function () {
     let searchOid = $("#txtSearchOrderId").val();
-    searchOrderByOrderDetailTable(searchOid);
-    searchOrderByOrderTable(searchOid);
+    /*searchOrderByOrderDetailTable(searchOid);
+    searchOrderByOrderTable(searchOid);*/
 });
 
 // btn clear search field function
@@ -391,8 +394,8 @@ $("#btnClearSearchOrderField").click(function () {
     $("#txtSearchOrderId").val("");
     $("#txtSearchOrderId").css('border', '1px solid #ced4da');
     $("#txtSearchOrderId").focus();
-    loadOrderTable();
-    loadOrderDetailTable();
+    /*loadOrderTable();
+    loadOrderDetailTable();*/
 });
 
 // add validation to search order text field
@@ -401,8 +404,8 @@ $("#txtSearchOrderId").keyup(function (event) {
     if (regOrderId.test(searchOid)) {
         $("#txtSearchOrderId").css('border', '2px solid green');
         if (event.key == "Enter") {
-            searchOrderByOrderDetailTable(searchOid);
-            searchOrderByOrderTable(searchOid);
+            /*searchOrderByOrderDetailTable(searchOid);
+            searchOrderByOrderTable(searchOid);*/
         }
     } else {
         $("#txtSearchOrderId").css('border', '2px solid red');
