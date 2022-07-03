@@ -12,62 +12,64 @@ let regBuyItemQty = /^[0-9]{1,}$/;
 
 $(function () {
     generateOId();
-    /*loadOrderTable();
-    loadOrderDetailTable();*/
+    loadOrderTable();
+    loadOrderDetailTable();
 })
 
+var orderUrl = "http://localhost:8080/springPOS/api/v1/order";
 
 // Generate Order Id
 function generateOId() {
     $.ajax({
-        url: "http://localhost:8080/spa/order?option=GENERATEORDERID",
+        url: orderUrl + "/generateOrderId",
         method: "GET",
         success: function (res) {
-            $("#txtOrderId").val(res.orderId);
+            $("#txtOrderId").val(res.data);
         }
     })
 }
 
 // Add Listener method to customer id combo box for search customer details
 $("#cmbSelectCustomerId").change(function () {
-    var id = $("#cmbSelectCustomerId").find('option:selected').text();
+    var custId = $("#cmbSelectCustomerId").find('option:selected').text();
     $.ajax({
-        url: "http://localhost:8080/spa/customer?option=SEARCH&CusID=" + id,
+        url: orderUrl + "/customer/" + custId,
         method: "GET",
         success: function (res) {
-            if (res.status == 200) {
-                $("#txtpocName").val(res.name);
-                $("#txtpocaddress").val(res.address);
-                $("#txtpocsalary").val(res.salary);
+            if (res.code == 200) {
+                $("#txtpocName").val(res.data.name);
+                $("#txtpocaddress").val(res.data.address);
+                $("#txtpocsalary").val(res.data.salary);
                 var code = $("#cmbitemcode").find('option:selected').text();
                 if (code != "-Select Item-" && $("#txtbuyQty").val() != '') {
                     $("#btnAddToCart").prop('disabled', false);
                 }
-            } else {
-                $("#txtpocName").val("");
-                $("#txtpocaddress").val("");
-                $("#txtpocsalary").val("");
-                $("#btnAddToCart").prop('disabled', true);
             }
+        },
+        error: function (ob) {
+            $("#txtpocName").val("");
+            $("#txtpocaddress").val("");
+            $("#txtpocsalary").val("");
+            $("#btnAddToCart").prop('disabled', true);
         }
     })
 });
 
 // Add Listener method to item code combo box for search item details
 $("#cmbitemcode").change(function () {
-    var code = $("#cmbitemcode").find('option:selected').text();
+    var itemCode = $("#cmbitemcode").find('option:selected').text();
     $.ajax({
-        url: "http://localhost:8080/spa/item?option=SEARCH&ItemCode=" + code,
+        url: orderUrl + "/item/" + itemCode,
         method: "GET",
         success: function (res) {
-            if (res.status == 200) {
-                $("#txtpoiName").val(res.name);
-                $("#txtitemPrice").val(res.unitPrice);
-                let qtyOnHand = parseInt(res.qty);
+            if (res.code == 200) {
+                $("#txtpoiName").val(res.data.description);
+                $("#txtitemPrice").val(res.data.unitPrice);
+                let qtyOnHand = parseInt(res.data.qtyOnHand);
 
                 var changedTempQty = false;
                 for (var j = 0; j < cartTMDB.length; j++) {
-                    if (cartTMDB[j].getICode() == code) {
+                    if (cartTMDB[j].getICode() == itemCode) {
                         let cartQty = cartTMDB[j].getBuyQty();
                         let tempQty = qtyOnHand - cartQty;
                         $("#txtqtyOnHand").val(tempQty);
@@ -76,7 +78,7 @@ $("#cmbitemcode").change(function () {
                 }
 
                 if (changedTempQty == false) {
-                    $("#txtqtyOnHand").val(res.qty);
+                    $("#txtqtyOnHand").val(res.data.qtyOnHand);
                 }
 
                 var id = $("#cmbSelectCustomerId").find('option:selected').text();
@@ -84,6 +86,12 @@ $("#cmbitemcode").change(function () {
                     $("#btnAddToCart").prop('disabled', false);
                 }
             }
+        },
+        error: function (ob) {
+            $("#txtpoiName").val("");
+            $("#txtitemPrice").val("");
+            $("#txtqtyOnHand").val("");
+            $("#btnAddToCart").prop('disabled', true);
         }
     })
 });
@@ -114,10 +122,10 @@ $("#btnAddToCart").click(function () {
     var qtyOnHand = parseInt($("#txtqtyOnHand").val());
     var buyQty = parseInt($("#txtbuyQty").val());
     if (buyQty <= qtyOnHand) {
-        /*addItemsToCart();
+        addItemsToCart();
         loadCartItemsToTable();
         clearSelectItemFields();
-        calculateTotalAndNoOfItems();*/
+        calculateTotalAndNoOfItems();
         $("#cartTable>tr").on('dblclick', function () {
             var itemCode = $(this).children(":eq(0)").text();
             for (var i = 0; i < cartTMDB.length; i++) {
@@ -125,9 +133,9 @@ $("#btnAddToCart").click(function () {
                     cartTMDB.splice(i, 1);
                 }
             }
-            /*loadCartItemsToTable();
+            loadCartItemsToTable();
             calculateTotalAndNoOfItems();
-            clearSelectItemFields();*/
+            clearSelectItemFields();
         });
 
     } else {
@@ -222,13 +230,13 @@ $("#txtCash").keyup(function (event) {
 
 // Clear Selected item details fields
 $("#btnClearItemFields").click(function () {
-    /*clearSelectItemFields();*/
+    clearSelectItemFields();
 });
 
 // Cancel Order
 $("#btnCancelOrder").click(function () {
-    /*clearPlaceOrderForm();
-    loadCartItemsToTable();*/
+    clearPlaceOrderForm();
+    loadCartItemsToTable();
 });
 
 // Clear Place order form
@@ -262,33 +270,42 @@ $("#btnPlaceOrder").click(function () {
     var orderDetails = [];
     for (let i = 0; i < cartTMDB.length; i++) {
         var od = {
+            orderId: $("#txtOrderId").val(),
             itemCode: cartTMDB[i].getICode(),
             itemName: cartTMDB[i].getIName(),
             unitPrice: cartTMDB[i].getItemPrice(),
-            buyQty: cartTMDB[i].getBuyQty(),
+            qty: cartTMDB[i].getBuyQty(),
             total: cartTMDB[i].getItemTotal()
         }
         orderDetails.push(od);
     }
 
+    var customer = {
+        id: $("#cmbSelectCustomerId").find('option:selected').text(),
+        name: $("#txtpocName").val(),
+        address: $("#txtpocaddress").val(),
+        salary: $("#txtpocsalary").val()
+    }
+
     var order = {
         orderId: $("#txtOrderId").val(),
         orderDate: $("#txtOrderDate").val(),
-        customerId: $("#cmbSelectCustomerId").find('option:selected').text(),
-        orderTotal: $("#txtTotal").val().split("/")[0],
+        customer: customer,
+        cost: $("#txtTotal").val().split("/")[0],
         orderDetails: orderDetails
     }
     $.ajax({
-        url: "http://localhost:8080/spa/order",
+        url: orderUrl,
         method: "POST",
+        contentType: "application/json",
         data: JSON.stringify(order),
         success: function (res) {
-            if (res.boolean==true){
-                /*clearPlaceOrderForm();
+            if (res.data == true) {
+                clearPlaceOrderForm();
                 loadCartItemsToTable();
                 loadOrderTable();
                 loadOrderDetailTable();
-                generateOId();*/
+                generateOId();
 
                 swal({
                     title: "Success!",
@@ -298,6 +315,9 @@ $("#btnPlaceOrder").click(function () {
                     timer: 2000
                 });
             }
+        },
+        error: function (res) {
+            alert(res.message);
         }
     })
 
@@ -308,11 +328,11 @@ function loadOrderTable() {
 
     $("#orderTable").empty();
     $.ajax({
-        url: "http://localhost:8080/spa/order?option=GETALLORDERS",
+        url: orderUrl,
         method: "GET",
         success: function (res) {
-            for (let order of res) {
-                let tableRow = `<tr><td>${order.orderId}</td><td>${order.orderDate}</td><td>${order.custId}</td><td>${order.total}</td></tr>`;
+            for (let order of res.data) {
+                let tableRow = `<tr><td>${order.orderId}</td><td>${order.orderDate}</td><td>${order.customer.id}</td><td>${order.cost}</td></tr>`;
                 $("#orderTable").append(tableRow);
             }
         }
@@ -323,12 +343,12 @@ function loadOrderTable() {
 function loadOrderDetailTable() {
     $("#orderDetailsTable").empty();
     $.ajax({
-        url: "http://localhost:8080/spa/order?option=GETALLORDERDETAILS",
+        url: orderUrl + "/loadOrderDetails",
         method: "GET",
         success: function (res) {
             console.log(res.data);
-            for (let orderDetail of res) {
-                let tableRow = `<tr><td>${orderDetail.orderId}</td><td>${orderDetail.itemCode}</td><td>${orderDetail.itemName}</td><td>${orderDetail.unitPrice}</td><td>${orderDetail.qty}</td><td>${orderDetail.total}</td></tr>`;
+            for (let orderDetails of res.data) {
+                let tableRow = `<tr><td>${orderDetails.orderId}</td><td>${orderDetails.itemCode}</td><td>${orderDetails.itemName}</td><td>${orderDetails.unitPrice}</td><td>${orderDetails.qty}</td><td>${orderDetails.total}</td></tr>`;
                 $("#orderDetailsTable").append(tableRow);
             }
         }
@@ -339,24 +359,25 @@ function loadOrderDetailTable() {
 function searchOrderByOrderTable(orderId) {
 
     $.ajax({
-        url: "http://localhost:8080/spa/order?option=SEARCHORDER&orderId=" + orderId,
+        url: orderUrl + "/orderTable/" + orderId,
         method: "GET",
         success: function (res) {
-            if (res.status == 200) {
+            if (res.code == 200) {
                 $("#orderTable").empty();
-                let tableRow = `<tr><td>${res.orderId}</td><td>${res.orderDate}</td><td>${res.customerId}</td><td>${res.total}</td></tr>`;
+                let tableRow = `<tr><td>${res.data.orderId}</td><td>${res.data.orderDate}</td><td>${res.data.customer.id}</td><td>${res.data.cost}</td></tr>`;
                 $("#orderTable").append(tableRow);
-            } else {
-                /*loadOrderTable();
-                loadOrderDetailTable();*/
-                swal({
-                    title: "Error!",
-                    text: "Order Not Found",
-                    icon: "warning",
-                    button: "Close",
-                    timer: 2000
-                });
             }
+        },
+        error:function (ob) {
+            loadOrderTable();
+            loadOrderDetailTable();
+            swal({
+                title: "Error!",
+                text: "Order Not Found",
+                icon: "warning",
+                button: "Close",
+                timer: 2000
+            });
         }
     });
 }
@@ -364,12 +385,15 @@ function searchOrderByOrderTable(orderId) {
 function searchOrderByOrderDetailTable(orderId) {
     $("#orderDetailsTable").empty();
     $.ajax({
-        url: "http://localhost:8080/spa/order?option=SEARCHORDERDETAIL&orderId=" + orderId,
+        url: orderUrl + "/orderDetailTable/" + orderId,
         method: "GET",
         success: function (res) {
-            for (let orderDetail of res) {
-                let tableRow = `<tr><td>${orderDetail.orderId}</td><td>${orderDetail.itemCode}</td><td>${orderDetail.itemName}</td><td>${orderDetail.unitPrice}</td><td>${orderDetail.qty}</td><td>${orderDetail.total}</td></tr>`;
-                $("#orderDetailsTable").append(tableRow);
+            if (res.code == 200) {
+                for (let orderDetail of res.data) {
+                    console.log(orderDetail);
+                    let tableRow = `<tr><td>${orderDetail.orderId}</td><td>${orderDetail.itemCode}</td><td>${orderDetail.itemName}</td><td>${orderDetail.unitPrice}</td><td>${orderDetail.qty}</td><td>${orderDetail.total}</td></tr>`;
+                    $("#orderDetailsTable").append(tableRow);
+                }
             }
         }
     });
@@ -385,8 +409,8 @@ $("#searchOrder").on('shown.bs.modal', function () {
 // btn search order function
 $("#btnSearchOrder").click(function () {
     let searchOid = $("#txtSearchOrderId").val();
-    /*searchOrderByOrderDetailTable(searchOid);
-    searchOrderByOrderTable(searchOid);*/
+    searchOrderByOrderDetailTable(searchOid);
+    searchOrderByOrderTable(searchOid);
 });
 
 // btn clear search field function
@@ -394,8 +418,8 @@ $("#btnClearSearchOrderField").click(function () {
     $("#txtSearchOrderId").val("");
     $("#txtSearchOrderId").css('border', '1px solid #ced4da');
     $("#txtSearchOrderId").focus();
-    /*loadOrderTable();
-    loadOrderDetailTable();*/
+    loadOrderTable();
+    loadOrderDetailTable();
 });
 
 // add validation to search order text field
@@ -404,8 +428,8 @@ $("#txtSearchOrderId").keyup(function (event) {
     if (regOrderId.test(searchOid)) {
         $("#txtSearchOrderId").css('border', '2px solid green');
         if (event.key == "Enter") {
-            /*searchOrderByOrderDetailTable(searchOid);
-            searchOrderByOrderTable(searchOid);*/
+            searchOrderByOrderDetailTable(searchOid);
+            searchOrderByOrderTable(searchOid);
         }
     } else {
         $("#txtSearchOrderId").css('border', '2px solid red');

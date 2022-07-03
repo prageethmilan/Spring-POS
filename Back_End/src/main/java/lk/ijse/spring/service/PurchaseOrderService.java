@@ -1,7 +1,9 @@
 package lk.ijse.spring.service;
 
 import lk.ijse.spring.dto.CustomerDTO;
+import lk.ijse.spring.dto.ItemDTO;
 import lk.ijse.spring.dto.OrderDTO;
+import lk.ijse.spring.dto.OrderDetailsDTO;
 
 import java.util.List;
 
@@ -14,11 +16,19 @@ public interface PurchaseOrderService {
 
     void updateOrder(OrderDTO dto);
 
-    void deleteCustomer(String oid);
+    void deleteOrder(String oid);
 
     OrderDTO searchOrder(String oid);
 
-    List<OrderDTO> getAllCustomers();
+    List<OrderDetailsDTO> searchOrderDetails(String oid);
+
+    List<OrderDTO> getAllOrders();
+
+    List<OrderDetailsDTO> getAllOrderDetails();
+
+    CustomerDTO searchCustomer(String id);
+
+    ItemDTO searchItem(String code);
 
     String generateOrderId();
 }

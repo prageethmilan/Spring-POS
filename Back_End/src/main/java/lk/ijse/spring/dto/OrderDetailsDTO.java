@@ -14,7 +14,7 @@ import lombok.ToString;
 @Data
 @ToString
 public class OrderDetailsDTO {
-    private String oid;
+    private String orderId;
     private String itemCode;
     private String itemName;
     private int qty;
